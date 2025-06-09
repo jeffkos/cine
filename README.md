@@ -12,6 +12,7 @@
 - 🛒 Réservation en ligne avec ou sans paiement
 - 🍿 Boutique de snacks et boissons
 - 👤 Espace membre et interface d'administration
+- 🔑 Connexion unique pour tous les rôles (utilisateur, admin ou superadmin)
 
 ---
 

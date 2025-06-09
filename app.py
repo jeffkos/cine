@@ -550,36 +550,10 @@ def register():
         conn.close()
 
     return render_template('register.html', message=message)
-
-
-
-@app.route('/login_user', methods=['GET', 'POST'])
-def login_user():
-    erreur = ""
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-
-        conn = sqlite3.connect('cinebuzz.db')
-        c = conn.cursor()
-        c.execute("SELECT id, username, password_hash FROM users WHERE email = ?", (email,))
-        user = c.fetchone()
-        conn.close()
-
-        if user and bcrypt.checkpw(password.encode('utf-8'), user[2]):
-            session['user_id'] = user[0]
-            session['username'] = user[1]
-            session['user'] = True
-            return redirect(url_for('accueil'))
-        else:
-            erreur = "❌ Identifiants incorrects."
-
-    return render_template('login_user.html', erreur=erreur)
-
 @app.route('/mon-compte')
 def mon_compte():
     if not session.get('user'):
-        return redirect(url_for('login_user'))
+        return redirect(url_for("login"))
 
     user_id = session.get('user_id')
 
