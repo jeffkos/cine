@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ film.titre }} – CinéBuzz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+            max-width: 900px;
+            margin: auto;
+            background-color: #f5f5f5;
+        }
+        img {
+            width: 100%;
+            max-width: 700px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 10px 0;
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+        }
+        hr {
+            margin: 40px 0;
+        }
+        .commentaire {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 5px solid #007bff;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>{{ film.titre }} ({{ film.annee }})</h1>
+
+    {% if film.affiche %}
+        <img src="{{ film.affiche }}" alt="Affiche du film">
+    {% endif %}
+
+    <p><strong>Durée :</strong> {{ film.duree }}</p>
+    <p><strong>Note :</strong> ⭐ {{ film.note }}/10</p>
+    <p><strong>Résumé :</strong> {{ film.resume }}</p>
+    <p><strong>Acteurs principaux :</strong> {{ film.acteurs | join(', ') }}</p>
+
+    {% if film.bande_annonce %}
+        <p><a class="btn" href="{{ film.bande_annonce }}" target="_blank">▶️ Voir la bande-annonce</a></p>
+    {% endif %}
+
+    <hr>
+    <h2>🎟️ Réserver une séance</h2>
+        <p>
+            <!-- Bouton vers le formulaire de réservation interne -->
+            <a class="btn"
+            href="{{ url_for('reserver', tmdb_id=tmdb_id) }}">
+            📝 Réserver via formulaire
+            </a>
+        </p>
+
+        <p>
+            <!-- Bouton WhatsApp direct -->
+            <a class="btn"
+            href="https://wa.me/243845040599?text=Bonjour%20CinéBuzz%2C%20je%20souhaite%20réserver%20pour%20le%20film%20{{ film.titre | urlencode }}."
+            target="_blank">
+            💬 Réserver par WhatsApp
+            </a>
+        </p>
+    <h2>📅 Ajouter à Google Agenda</h2>
+
+    {% if projections %}
+        <label for="choix-seance"><strong>Choisissez une séance :</strong></label><br>
+        <select id="choix-seance">
+            {% for date, horaires in projections %}
+                {% for horaire in horaires.split(',') %}
+                    <option value="{{ date }}|{{ horaire.strip() }}">{{ date }} à {{ horaire.strip() }}</option>
+                {% endfor %}
+            {% endfor %}
+        </select>
+
+        <p>
+            <a class="btn" id="agenda-link" target="_blank" href="#">📅 Ajouter dans Google Agenda</a>
+        </p>
+
+        <script>
+            function convertirUTC(dateStr, heureStr) {
+                const [y, m, d] = dateStr.split('-');
+                let h = parseInt(heureStr.slice(0, 2));
+                let hFin = h + 2;
+                h = h < 10 ? "0" + h : h;
+                hFin = hFin < 10 ? "0" + hFin : hFin;
+                return {
+                    start: `${y}${m}${d}T${h}0000Z`,
+                    end: `${y}${m}${d}T${hFin}0000Z`
+                };
+            }
+
+            const select = document.getElementById("choix-seance");
+            const btn = document.getElementById("agenda-link");
+
+            function majLienAgenda() {
+                const [date, heure] = select.value.split('|');
+                const utc = convertirUTC(date, heure);
+                const titre = "{{ film.titre | urlencode }}";
+                const desc = "{{ film.resume | urlencode }}";
+                const lien = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${titre}&details=${desc}&dates=${utc.start}/${utc.end}`;
+                btn.href = lien;
+            }
+
+            select.addEventListener('change', majLienAgenda);
+            window.onload = majLienAgenda;
+        </script>
+    {% else %}
+        <p><em>Aucune séance programmée.</em></p>
+    {% endif %}
+
+    <hr>
+    <h2>💬 Commentaires des utilisateurs</h2>
+
+    {% if message %}
+        <p style="color: green;">{{ message }}</p>
+    {% endif %}
+
+    {% for auteur, texte in commentaires %}
+        <div class="commentaire">
+            <strong>{{ auteur }}</strong><br>
+            {{ texte }}
+        </div>
+    {% endfor %}
+
+    {% if session.get('user') or session.get('admin') %}
+        <form method="POST">
+            <textarea name="commentaire" placeholder="Votre avis sur le film..." required></textarea><br>
+            <button class="btn" type="submit">Publier le commentaire</button>
+        </form>
+    {% else %}
+        <p><em>Connectez-vous pour laisser un commentaire.</em></p>
+    {% endif %}
+
+
+
+    <p><a href="{{ url_for('programme') }}">← Retour au programme</a></p>
+
+</body>
+</html>

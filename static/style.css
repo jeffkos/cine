@@ -1,0 +1,80 @@
+body {
+    font-family: 'Barlow', sans-serif;
+    background-color: #111;
+    color: #f2f2f2;
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    color: #ffc107;
+    text-decoration: none;
+}
+a:hover {
+    color: #ff5722;
+}
+
+header {
+    background: #000;
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.8em;
+}
+
+nav a {
+    margin-left: 15px;
+    font-weight: 600;
+}
+
+main {
+    padding: 30px;
+}
+
+footer {
+    background: #222;
+    text-align: center;
+    padding: 15px;
+    font-size: 0.9em;
+    margin-top: 30px;
+}
+.slider-container {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+}
+.slide {
+    flex: 0 0 auto;
+    width: 100%;
+    position: relative;
+    scroll-snap-align: start;
+}
+.slide img {
+    width: 100%;
+    height: auto;
+}
+.slide-caption {
+    position: absolute;
+    bottom: 10%;
+    left: 5%;
+    color: white;
+    background: rgba(0,0,0,0.6);
+    padding: 15px;
+}
+.film-grid, .produits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+}
+.film-card, .produit-card {
+    background: white;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+}

@@ -1,0 +1,55 @@
+<h1>🎬 Ajouter un film à la programmation</h1>
+
+<!-- 🔍 Barre de recherche TMDB -->
+<form method="GET">
+    <input type="text" name="query" placeholder="Rechercher un film par nom..." required>
+    <button type="submit">🔍 Rechercher</button>
+</form>
+
+<hr>
+
+<!-- 📋 Résultats de la recherche TMDB -->
+{% if results %}
+    <h3>Résultats :</h3>
+    <ul>
+        {% for film in results %}
+            <li style="margin-bottom: 15px;">
+                <strong>{{ film.title }}</strong> ({{ film.release_date }})
+                <form method="POST" style="margin-top: 10px;">
+                    <input type="hidden" name="tmdb_id" value="{{ film.id }}">
+                    <input type="hidden" name="titre" value="{{ film.title }}">
+                    <input type="hidden" name="tmdb_id" value="{{ film.id }}">
+                    <input type="date" name="date" required>
+                    <input type="text" name="horaire" placeholder="Ex: 19h00" required>
+                    <select name="version" required>
+                        <option value="VF">VF</option>
+                        <option value="VOSTFR">VOSTFR</option>
+                    </select>
+                    <button type="submit">🎟️ Ajouter {{ film.title }}</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+<!-- ✅ Message de confirmation -->
+{% if message %}
+    <p style="color:green;">{{ message }}</p>
+{% endif %}
+
+<hr>
+
+<!-- 🛠️ Formulaire manuel si besoin -->
+<h3>➕ Ajouter un film avec ID TMDB (optionnel)</h3>
+<form method="POST">
+    <input type="text" name="tmdb_id" placeholder="ID TMDB" required><br>
+    <input type="date" name="date" required><br>
+    <input type="text" name="horaire" placeholder="Ex: 19h00" required><br>
+    <select name="version" required>
+        <option value="VF">VF</option>
+        <option value="VOSTFR">VOSTFR</option>
+    </select><br>
+    <button type="submit">Ajouter</button>
+</form>
+
+<p><a href="{{ url_for('admin_dashboard') }}">← Retour au tableau de bord</a></p>

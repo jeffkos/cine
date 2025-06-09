@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ajouter un film – CinéBuzz Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        form {
+            display: flex;
+            flex-direction: column;
+            width: 400px;
+            margin: auto;
+        }
+        label, input, select, button {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎬 CinéBuzz – Administration</h1>
+
+    {% if message %}
+        <p style="color: green;">{{ message }}</p>
+    {% endif %}
+
+    <form method="POST">
+        <label for="titre">Nom du film :</label>
+        <input type="text" name="titre" id="titre" required>
+
+        <button type="button" onclick="chercherTmdbId()">🔍 Chercher ID TMDb</button>
+
+        <label for="date">Date de projection :</label>
+        <input type="date" name="date" required>
+
+        <label for="horaires">Horaires (séparés par virgule) :</label>
+        <input type="text" name="horaires" placeholder="14h,17h,20h" required>
+
+        <label for="version">Version :</label>
+        <select name="version">
+            <option value="VF">VF</option>
+            <option value="VOSTFR">VOSTFR</option>
+        </select>
+
+        <label for="tmdb_id">ID TMDb :</label>
+        <input type="text" name="tmdb_id" id="tmdb_id" readonly required>
+
+        <button type="submit">Ajouter le film</button>
+    </form>
+
+    <p style="text-align:center; margin-top:20px;">
+        <a href="{{ url_for('accueil') }}">← Retour à l'accueil</a>
+    </p>
+
+    <script>
+        async function chercherTmdbId() {
+            const titre = document.getElementById('titre').value;
+            if (!titre) {
+                alert("Veuillez d'abord entrer un titre.");
+                return;
+            }
+
+            const response = await fetch(`/tmdb_search?query=${encodeURIComponent(titre)}`);
+            const data = await response.json();
+
+            if (data.tmdb_id) {
+                document.getElementById('tmdb_id').value = data.tmdb_id;
+                alert(`✅ TMDb ID trouvé : ${data.tmdb_id}`);
+            } else {
+                alert("❌ Aucun résultat trouvé.");
+            }
+        }
+    </script>
+</body>
+</html>

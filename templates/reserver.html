@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Réserver – {{ film }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        form {
+            max-width: 500px;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        input, select, button {
+            margin: 10px 0;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎟️ Réserver pour : {{ film }}</h1>
+
+    {% if message %}
+        <p style="color: green;">{{ message }}</p>
+    {% endif %}
+
+    <form method="POST">
+        <input type="text" name="nom" placeholder="Votre nom" required>
+        <input type="email" name="email" placeholder="Votre email" required>
+        <input type="text" name="telephone" placeholder="Téléphone" required>
+
+        <label for="date_projection">Date :</label>
+        <select name="date_projection" required>
+            {% for date, horaires in projections %}
+                <option value="{{ date }}">{{ date }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="horaire">Horaire :</label>
+        <select name="horaire" required>
+            {% for date, horaires in projections %}
+                {% for h in horaires.split(',') %}
+                    <option value="{{ h.strip() }}">{{ h.strip() }}</option>
+                {% endfor %}
+            {% endfor %}
+        </select>
+
+        <button type="submit">Valider la réservation</button>
+    </form>
+
+    <p style="text-align:center; margin-top:20px;">
+        <a href="{{ url_for('detail_film', tmdb_id=tmdb_id) }}">← Retour au film</a>
+    </p>
+</body>
+</html>

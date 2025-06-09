@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Accueil – CinéBuzz{% endblock %}
+
+{% block content %}
+
+<!-- Slider des films du jour -->
+<div class="slider">
+    {% if films_du_jour %}
+        <div class="slider-container">
+            {% for film in films_du_jour %}
+                <div class="slide">
+                    <img src="https://image.tmdb.org/t/p/w780{{ film.affiche }}" alt="{{ film.titre }}">
+                    <div class="slide-caption">
+                        <h2>{{ film.titre }}</h2>
+                        <p>{{ film.version }} – {{ film.horaires }}</p>
+                        <a href="{{ url_for('detail_film', tmdb_id=film.tmdb_id) }}" class="btn">Voir le détail</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Aucun film programmé aujourd’hui.</p>
+    {% endif %}
+</div>
+
+<!-- Section "À l'affiche" -->
+<h2>🎬 À l'affiche cette semaine</h2>
+<div class="film-grid">
+    {% for film in films_semaine %}
+        <div class="film-card">
+            <img src="https://image.tmdb.org/t/p/w342{{ film.affiche }}" alt="{{ film.titre }}">
+            <h3>{{ film.titre }}</h3>
+            <a href="{{ url_for('detail_film', tmdb_id=film.tmdb_id) }}" class="btn-small">Détails</a>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Section Produits -->
+<h2>🧃 Nos snacks</h2>
+<div class="produits-grid">
+    {% for produit in produits %}
+        <div class="produit-card">
+            <img src="{{ url_for('static', filename='uploads/' + produit.image) }}" alt="{{ produit.nom }}">
+            <h4>{{ produit.nom }}</h4>
+            <p>{{ produit.prix }} FCFA</p>
+        </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

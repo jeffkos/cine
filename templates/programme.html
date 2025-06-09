@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Programme de la semaine – CinéBuzz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .jour-section {
+            margin-bottom: 50px;
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+        .film-block {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .film-block img {
+            width: 100px;
+            border-radius: 5px;
+        }
+        .film-info {
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div style="text-align: right; margin: 10px;">
+        {% if session.get('user') %}
+            Bonjour {{ session['username'] }} |
+            <a href="{{ url_for('mon_compte') }}">👤 Mon compte</a> |
+            <a href="{{ url_for('logout') }}">Déconnexion</a>
+        {% else %}
+            <a href="{{ url_for('login_user') }}">Se connecter</a> |
+            <a href="{{ url_for('register') }}">S’inscrire</a>
+        {% endif %}
+    </div>
+    <h1>🎞️ Programme de la semaine – CinéBuzz</h1>
+
+    {% for jour, films in programme.items() %}
+        <div class="jour-section">
+            <h2>{{ jour }}</h2>
+
+            {% if films %}
+                {% for film in films %}
+                <div class="film-block">
+                    {% if film.affiche %}
+                        <img src="{{ film.affiche }}" alt="affiche">
+                    {% endif %}
+                    <div class="film-info">
+                        <h3><a href="{{ url_for('detail_film', tmdb_id=film.tmdb_id) }}">{{ film.titre }}</a></h3>
+
+                        <p><strong>Horaires :</strong> {{ film.horaires }}</p>
+                        <p><strong>Version :</strong> {{ film.version }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>Aucune projection ce jour-là.</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mon Compte – CinéBuzz</title>
+    <style>
+        body { font-family: sans-serif; padding: 40px; max-width: 800px; margin: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+        th { background-color: #f0f0f0; }
+    </style>
+</head>
+<body>
+
+    <h1>👤 Mon Compte : {{ session['username'] }}</h1>
+
+    {% if reservations %}
+        <h2>📅 Mes réservations</h2>
+        <table>
+            <tr>
+                <th>Film</th>
+                <th>Date</th>
+                <th>Horaire</th>
+                <th>Canal d'alerte</th>
+                <th>Alerte avant</th>
+            </tr>
+            {% for r in reservations %}
+            <tr>
+                <td>{{ r[0] }}</td>
+                <td>{{ r[1] }}</td>
+                <td>{{ r[2] }}</td>
+                <td>{{ r[3] }}</td>
+                <td>{{ r[4] }} min</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p><em>Vous n'avez encore aucune réservation.</em></p>
+    {% endif %}
+
+    <p><a href="{{ url_for('accueil') }}">← Retour à l'accueil</a></p>
+
+</body>
+</html>

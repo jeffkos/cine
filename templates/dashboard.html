@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard – Réservations CinéBuzz</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 40px; }
+        canvas { max-width: 800px; margin: auto; }
+    </style>
+</head>
+<body>
+    <h1>📊 Dashboard des Réservations</h1>
+
+    <canvas id="reservationsChart"></canvas>
+
+    <script>
+        const ctx = document.getElementById('reservationsChart').getContext('2d');
+        const reservationsChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ labels | safe }},
+                datasets: [{
+                    label: 'Nombre de réservations',
+                    data: {{ values | safe }},
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                scales: {
+                    x: { beginAtZero: true }
+                }
+            }
+        });
+    </script>
+
+    <p style="margin-top: 20px;">
+        <a href="{{ url_for('admin_reservations') }}">← Retour aux réservations</a>
+    </p>
+</body>
+</html>

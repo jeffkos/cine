@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion des Admins</title>
+    <style>
+        body { font-family: sans-serif; padding: 40px; text-align: center; }
+        table { margin: auto; border-collapse: collapse; width: 80%; }
+        th, td { padding: 10px; border: 1px solid #ccc; }
+        .popup {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center;
+        }
+        .popup-content {
+            background: white; padding: 30px; border-radius: 10px; width: 400px;
+        }
+        .popup form { display: flex; flex-direction: column; gap: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🛠️ Gestion des comptes administrateurs</h1>
+
+    <table>
+        <tr>
+            <th>Nom d'utilisateur</th>
+            <th>Rôle actuel</th>
+            <th>Modifier</th>
+        </tr>
+        {% for admin in admins %}
+        <tr>
+            <td>{{ admin[0] }}</td>
+            <td>{{ admin[1] }}</td>
+            <td>
+                <button onclick="ouvrirPopup('{{ admin[0] }}', '{{ admin[1] }}')">Changer</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <p><a href="{{ url_for('admin_reservations') }}">← Retour à l’admin</a></p>
+
+    <!-- ✅ POPUP -->
+    <div class="popup" id="popup">
+        <div class="popup-content">
+            <h2>Modifier le rôle</h2>
+            <form method="POST">
+                <input type="hidden" name="username" id="popup-username">
+                <label for="role">Nouveau rôle :</label>
+                <select name="role" id="popup-role">
+                    <option value="moderator">Modérateur</option>
+                    <option value="superadmin">Superadmin</option>
+                </select>
+                <button type="submit">✅ Appliquer</button>
+                <button type="button" onclick="fermerPopup()">❌ Annuler</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function ouvrirPopup(username, roleActuel) {
+            document.getElementById('popup').style.display = 'flex';
+            document.getElementById('popup-username').value = username;
+            document.getElementById('popup-role').value = roleActuel;
+        }
+
+        function fermerPopup() {
+            document.getElementById('popup').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Admin – CinéBuzz</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f6f6f6;
+            max-width: 1000px;
+            margin: auto;
+            padding: 40px;
+        }
+
+        h1 { color: #333; }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        .card h3 {
+            margin-top: 0;
+        }
+
+        a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+
+        a:hover {
+            color: #0056b3;
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ul li {
+            margin-bottom: 10px;
+        }
+
+        .stat {
+            font-size: 1.2em;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎛️ Tableau de bord administrateur</h1>
+    <p>Bienvenue <strong>{{ username }}</strong>, voici vos accès :</p>
+
+    <div class="card">
+        <h3>📊 Statistiques globales</h3>
+        <ul>
+            <li class="stat">🎬 Films programmés : <strong>{{ total_films }}</strong></li>
+            <li class="stat">🧃 Produits disponibles : <strong>{{ total_produits }}</strong></li>
+            <li class="stat">🎟️ Réservations enregistrées : <strong>{{ total_reservations }}</strong></li>
+            <li class="stat">👤 Comptes utilisateurs : <strong>{{ total_utilisateurs }}</strong></li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h3>🧩 Accès rapides</h3>
+        <ul>
+            <li><a href="{{ url_for('admin_reservations') }}">🎟️ Gérer les réservations</a></li>
+            <li><a href="{{ url_for('programme') }}">🎬 Voir le programme des films</a></li>
+            <li><a href="{{ url_for('ajouter_film_manuellement') }}">➕ Ajouter un film</a></li>
+            <li><a href="{{ url_for('admin_produits') }}">🧃 Gérer les produits de consommation</a></li>
+            <li><a href="{{ url_for('gestion_admins') }}">🧑‍💼 Gérer les comptes administrateurs</a></li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h3>🔐 Compte</h3>
+        <p><a href="{{ url_for('logout') }}">🚪 Se déconnecter</a></p>
+    </div>
+
+</body>
+</html>

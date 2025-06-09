@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Environnements virtuels
+venv/
+.env/
+.envrc
+*.env
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS spécifiques
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Git
+.git/
+.gitignore

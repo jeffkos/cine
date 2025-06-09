@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin – Réservations</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        table {
+            width: 90%;
+            margin: auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #999;
+            text-align: center;
+        }
+        th {
+            background-color: #eee;
+        }
+        .wa-button {
+            background: green;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .export-link {
+            display: block;
+            margin: 20px auto;
+            width: fit-content;
+        }
+    </style>
+</head>
+<body>
+    <div style="text-align: right; margin: 10px;">
+        {% if session.get('user') %}
+            Bonjour {{ session['username'] }} |
+            <a href="{{ url_for('mon_compte') }}">👤 Mon compte</a> |
+            <a href="{{ url_for('logout') }}">Déconnexion</a>
+        {% else %}
+            <a href="{{ url_for('login_user') }}">Se connecter</a> |
+            <a href="{{ url_for('register') }}">S’inscrire</a>
+        {% endif %}
+    </div>
+
+    {% if session.get('role') == 'superadmin' %}
+    <a href="{{ url_for('gestion_admins') }}">⚙️ Gérer les admins</a> |
+    {% endif %}
+
+    {% if session.get('role') == 'superadmin' %}
+    <a href="{{ url_for('admin_produits') }}">🧃 Gérer les produits</a> |
+    {% endif %}
+
+
+    <a href="{{ url_for('admin_dashboard') }}">📊 Voir le Dashboard</a> |
+
+    <p style="text-align: right; margin-right: 40px;">
+        <a href="{{ url_for('nouveau_admin') }}">➕ Ajouter un admin</a> |
+        <a href="{{ url_for('modifier_mdp') }}">🔁 Modifier mot de passe</a> |
+        <a href="{{ url_for('logout') }}">🚪 Déconnexion</a>
+    </p>
+
+    <p style="text-align: right; margin-right: 40px;">
+        <a href="{{ url_for('logout') }}">🚪 Se déconnecter</a>
+    </p>
+
+    <h1 style="text-align: center;">📋 Liste des Réservations</h1>
+
+    <a href="{{ url_for('export_csv') }}" class="export-link">⬇️ Exporter en CSV</a>
+
+    
+    <div style="text-align: center; margin-bottom: 30px;">
+        <form method="get">
+            <input type="text" name="film" placeholder="Rechercher un film" value="{{ film_filter or '' }}">
+            <input type="date" name="date" value="{{ date_filter or '' }}">
+            <button type="submit">🔍 Filtrer</button>
+            <a href="{{ url_for('admin_reservations') }}">🔄 Réinitialiser</a>
+        </form>
+    </div>
+    <div style="width: 90%; margin: auto; margin-bottom: 40px;">
+        <h2>📊 Réservations par film</h2>
+        <table>
+            <tr>
+                <th>Film</th>
+                <th>Nombre de réservations</th>
+            </tr>
+            {% for film, total in stats %}
+            <tr>
+                <td>{{ film }}</td>
+                <td>{{ total }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    
+    <table>
+        <tr>
+            <th>Nom</th>
+            <th>Email</th>
+            <th>Téléphone</th>
+            <th>Film</th>
+            <th>Date</th>
+            <th>Horaire</th>
+            <th>WhatsApp</th>
+        </tr>
+        {% for r in reservations %}
+        <tr>
+            <td>{{ r[0] }}</td>
+            <td>{{ r[1] }}</td>
+            <td>{{ r[2] }}</td>
+            <td>{{ r[3] }}</td>
+            <td>{{ r[4] }}</td>
+            <td>{{ r[5] }}</td>
+            <td>
+                <a class="wa-button"
+                   href="https://wa.me/243845040599?text=Bonjour%20{{ r[0]|urlencode }}%2C%20vous%20avez%20réservé%20pour%20le%20film%20{{ r[3]|urlencode }}%20le%20{{ r[4] }}%20à%20{{ r[5] }}.%20Merci%20de%20confirmer."
+                   target="_blank">📲 WhatsApp</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
