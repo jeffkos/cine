@@ -1,6 +1,6 @@
 # 🎬 Cinébuzz
 
-**Cinébuzz** est une plateforme web de réservation de billets de cinéma, conçue en Python. Elle permet aux utilisateurs de consulter les films à l'affiche, réserver en ligne, voir les bandes-annonces, et découvrir les snacks disponibles dans leur salle préférée.
+**Cinébuzz** est une plateforme web de réservation de billets de cinéma, conçue en Python. Elle permet aux utilisateurs de consulter les films à l'affiche, réserver en ligne, voir les bandes-annonces, et découvrir les snacks disponibles dans leur salle préférée. Chaque film est proposé dans deux salles&nbsp;: **Utex** et **Shopping Mall**, avec trois séances fixes (10h, 15h et 20h).
 
 ---
 

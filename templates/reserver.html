@@ -31,14 +31,21 @@
 
         <label for="date_projection">Date :</label>
         <select name="date_projection" required>
-            {% for date, horaires in projections %}
+            {% for date, horaires, salle in projections %}
                 <option value="{{ date }}">{{ date }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="salle">Salle :</label>
+        <select name="salle" required>
+            {% for date, horaires, salle in projections %}
+                <option value="{{ salle }}">{{ salle }}</option>
             {% endfor %}
         </select>
 
         <label for="horaire">Horaire :</label>
         <select name="horaire" required>
-            {% for date, horaires in projections %}
+            {% for date, horaires, salle in projections %}
                 {% for h in horaires.split(',') %}
                     <option value="{{ h.strip() }}">{{ h.strip() }}</option>
                 {% endfor %}
