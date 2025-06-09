@@ -12,7 +12,7 @@
                     <img src="https://image.tmdb.org/t/p/w780{{ film.affiche }}" alt="{{ film.titre }}">
                     <div class="slide-caption">
                         <h2>{{ film.titre }}</h2>
-                        <p>{{ film.version }} – {{ film.horaires }}</p>
+                        <p>{{ film.version }} – {{ film.salle }} – {{ film.horaires }}</p>
                         <a href="{{ url_for('detail_film', tmdb_id=film.tmdb_id) }}" class="btn">Voir le détail</a>
                     </div>
                 </div>

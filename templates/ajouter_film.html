@@ -25,6 +25,10 @@
                         <option value="VF">VF</option>
                         <option value="VOSTFR">VOSTFR</option>
                     </select>
+                    <select name="salle" required>
+                        <option value="Utex">Utex</option>
+                        <option value="Shopping Mall">Shopping Mall</option>
+                    </select>
                     <button type="submit">🎟️ Ajouter {{ film.title }}</button>
                 </form>
             </li>
@@ -48,6 +52,10 @@
     <select name="version" required>
         <option value="VF">VF</option>
         <option value="VOSTFR">VOSTFR</option>
+    </select><br>
+    <select name="salle" required>
+        <option value="Utex">Utex</option>
+        <option value="Shopping Mall">Shopping Mall</option>
     </select><br>
     <button type="submit">Ajouter</button>
 </form>

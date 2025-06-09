@@ -87,9 +87,9 @@
     {% if projections %}
         <label for="choix-seance"><strong>Choisissez une séance :</strong></label><br>
         <select id="choix-seance">
-            {% for date, horaires in projections %}
+            {% for date, horaires, salle in projections %}
                 {% for horaire in horaires.split(',') %}
-                    <option value="{{ date }}|{{ horaire.strip() }}">{{ date }} à {{ horaire.strip() }}</option>
+                    <option value="{{ date }}|{{ horaire.strip() }}|{{ salle }}">{{ date }} {{ salle }} {{ horaire.strip() }}</option>
                 {% endfor %}
             {% endfor %}
         </select>

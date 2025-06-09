@@ -50,19 +50,20 @@ from datetime import date
 def films_du_jour():
     conn = sqlite3.connect('cinebuzz.db')
     c = conn.cursor()
-    c.execute("SELECT titre, horaires, version, tmdb_id FROM films WHERE date = ?", (date.today().isoformat(),))
+    c.execute("SELECT titre, horaires, version, tmdb_id, salle FROM films WHERE date = ?", (date.today().isoformat(),))
     resultats = c.fetchall()
     conn.close()
 
     # Enrichir avec l’API TMDb
     films = []
-    for titre, horaires, version, tmdb_id in resultats:
+    for titre, horaires, version, tmdb_id, salle in resultats:
         url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={API_KEY}&language=fr-FR"
         reponse = requests.get(url).json()
         films.append({
             "titre": titre,
             "horaires": horaires,
             "version": version,
+            "salle": salle,
             "affiche": f"https://image.tmdb.org/t/p/w780{reponse['backdrop_path']}" if reponse.get('backdrop_path') else None
         })
     return films
@@ -91,15 +92,16 @@ def admin():
         date_proj = request.form['date']
         horaires = request.form['horaires']
         version = request.form['version']
+        salle = request.form['salle']
         tmdb_id = request.form['tmdb_id']
 
         # Sauvegarde dans la base
         conn = sqlite3.connect('cinebuzz.db')
         c = conn.cursor()
         c.execute('''
-            INSERT INTO films (titre, date, horaires, version, tmdb_id)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (titre, date_proj, horaires, version, tmdb_id))
+            INSERT INTO films (titre, date, horaires, version, salle, tmdb_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (titre, date_proj, horaires, version, salle, tmdb_id))
         conn.commit()
         conn.close()
 
@@ -116,7 +118,7 @@ def programme():
 
     conn = sqlite3.connect('cinebuzz.db')
     c = conn.cursor()
-    c.execute("SELECT titre, date, horaires, version, tmdb_id FROM films ORDER BY date ASC")
+    c.execute("SELECT titre, date, horaires, version, tmdb_id, salle FROM films ORDER BY date ASC")
     resultats = c.fetchall()
     conn.close()
 
@@ -127,7 +129,7 @@ def programme():
         films_du_jour = [film for film in resultats if film[1] == jour_str]
         liste_films = []
 
-        for titre, date_proj, horaires, version, tmdb_id in films_du_jour:
+        for titre, date_proj, horaires, version, tmdb_id, salle in films_du_jour:
             url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={API_KEY}&language=fr-FR"
             reponse = requests.get(url).json()
             affiche = f"https://image.tmdb.org/t/p/w300{reponse['poster_path']}" if reponse.get('poster_path') else None
@@ -137,6 +139,7 @@ def programme():
                 "titre": titre,
                 "horaires": horaires,
                 "version": version,
+                "salle": salle,
                 "affiche": affiche,
                 "tmdb_id": tmdb_id  # ← Important
             })
@@ -193,7 +196,7 @@ def detail_film(tmdb_id):
     # 📅 Récupérer les projections programmées
     conn = sqlite3.connect('cinebuzz.db')
     c = conn.cursor()
-    c.execute("SELECT date, horaires FROM films WHERE tmdb_id = ? ORDER BY date ASC", (tmdb_id,))
+    c.execute("SELECT date, horaires, salle FROM films WHERE tmdb_id = ? ORDER BY date ASC", (tmdb_id,))
     projections = c.fetchall()
 
     # 💬 Récupérer les commentaires
@@ -238,7 +241,7 @@ def reserver(tmdb_id):
     # Récupérer les projections du film dans cinebuzz.db
     conn = sqlite3.connect('cinebuzz.db')
     c = conn.cursor()
-    c.execute("SELECT date, horaires FROM films WHERE tmdb_id = ?", (tmdb_id,))
+    c.execute("SELECT date, horaires, salle FROM films WHERE tmdb_id = ?", (tmdb_id,))
     projections = c.fetchall()
     conn.close()
 
@@ -249,6 +252,7 @@ def reserver(tmdb_id):
         email = request.form['email']
         telephone = request.form['telephone']
         date_projection = request.form['date_projection']
+        salle_res = request.form['salle']
         horaire = request.form['horaire']
         alerte_minutes = int(request.form.get('alerte_minutes', 60))
         canal = request.form.get('canal', 'email')
@@ -261,12 +265,12 @@ def reserver(tmdb_id):
         c = conn.cursor()
         c.execute('''
             INSERT INTO reservations (
-                nom, email, telephone, film, date_projection, horaire,
+                nom, email, telephone, film, date_projection, salle, horaire,
                 alerte_minutes, canal, user_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             nom, email, telephone, titre_film, date_projection,
-            horaire, alerte_minutes, canal, user_id
+            salle_res, horaire, alerte_minutes, canal, user_id
         ))
         conn.commit()
         conn.close()
@@ -295,7 +299,7 @@ def admin_reservations():
     c = conn.cursor()
 
     # Requête dynamique avec filtres
-    base_query = "SELECT nom, email, telephone, film, date_projection, horaire FROM reservations"
+    base_query = "SELECT nom, email, telephone, film, date_projection, salle, horaire FROM reservations"
     filters = []
     params = []
 
@@ -330,7 +334,7 @@ def export_csv():
 
     conn = sqlite3.connect('reservations.db')
     c = conn.cursor()
-    c.execute("SELECT nom, email, telephone, film, date_projection, horaire FROM reservations ORDER BY date_projection ASC")
+    c.execute("SELECT nom, email, telephone, film, date_projection, salle, horaire FROM reservations ORDER BY date_projection ASC")
     data = c.fetchall()
     conn.close()
 
@@ -339,7 +343,7 @@ def export_csv():
     writer = csv.writer(output)
 
     # Écriture des en-têtes
-    writer.writerow(["Nom", "Email", "Téléphone", "Film", "Date", "Horaire"])
+    writer.writerow(["Nom", "Email", "Téléphone", "Film", "Date", "Salle", "Horaire"])
 
     # Écriture des lignes
     for row in data:
@@ -677,12 +681,13 @@ def ajouter_film_manuellement():
         date = request.form['date']
         horaire = request.form['horaire']
         version = request.form['version']
+        salle = request.form['salle']
 
         conn = sqlite3.connect('cinebuzz.db')
         c = conn.cursor()
         titre = request.form['titre']
-        c.execute("INSERT INTO films (tmdb_id, titre, date, horaires, version) VALUES (?, ?, ?, ?, ?)",
-            (tmdb_id, titre, date, horaire, version))
+        c.execute("INSERT INTO films (tmdb_id, titre, date, horaires, version, salle) VALUES (?, ?, ?, ?, ?, ?)",
+            (tmdb_id, titre, date, horaire, version, salle))
 
         conn.commit()
         conn.close()
@@ -742,19 +747,20 @@ from datetime import date
 def films_du_jour():
     conn = sqlite3.connect('cinebuzz.db')
     c = conn.cursor()
-    c.execute("SELECT titre, horaires, version, tmdb_id FROM films WHERE date = ?", (date.today().isoformat(),))
+    c.execute("SELECT titre, horaires, version, tmdb_id, salle FROM films WHERE date = ?", (date.today().isoformat(),))
     resultats = c.fetchall()
     conn.close()
 
     # Enrichir avec TMDb
     films = []
-    for titre, horaires, version, tmdb_id in resultats:
+    for titre, horaires, version, tmdb_id, salle in resultats:
         url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={API_KEY}&language=fr-FR"
         reponse = requests.get(url).json()
         films.append({
             "titre": titre,
             "horaires": horaires,
             "version": version,
+            "salle": salle,
             "affiche": f"https://image.tmdb.org/t/p/w780{reponse['backdrop_path']}" if reponse.get('backdrop_path') else None
         })
     return films

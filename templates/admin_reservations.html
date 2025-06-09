@@ -102,6 +102,7 @@
             <th>Téléphone</th>
             <th>Film</th>
             <th>Date</th>
+            <th>Salle</th>
             <th>Horaire</th>
             <th>WhatsApp</th>
         </tr>
@@ -113,9 +114,10 @@
             <td>{{ r[3] }}</td>
             <td>{{ r[4] }}</td>
             <td>{{ r[5] }}</td>
+            <td>{{ r[6] }}</td>
             <td>
                 <a class="wa-button"
-                   href="https://wa.me/243845040599?text=Bonjour%20{{ r[0]|urlencode }}%2C%20vous%20avez%20réservé%20pour%20le%20film%20{{ r[3]|urlencode }}%20le%20{{ r[4] }}%20à%20{{ r[5] }}.%20Merci%20de%20confirmer."
+                   href="https://wa.me/243845040599?text=Bonjour%20{{ r[0]|urlencode }}%2C%20vous%20avez%20réservé%20pour%20le%20film%20{{ r[3]|urlencode }}%20le%20{{ r[4] }}%20en%20salle%20{{ r[5] }}%20à%20{{ r[6] }}.%20Merci%20de%20confirmer."
                    target="_blank">📲 WhatsApp</a>
             </td>
         </tr>

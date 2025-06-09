@@ -58,7 +58,7 @@
             {% for film in films %}
             <div class="slide" style="background-image: url('{{ film.affiche }}');">
                 <h2>{{ film.titre }}</h2>
-                <p><strong>Horaires :</strong> {{ film.horaires }}</p>
+                <p><strong>Salle :</strong> {{ film.salle }} | <strong>Horaires :</strong> {{ film.horaires }}</p>
                 <p><strong>Version :</strong> {{ film.version }}</p>
             </div>
             {% endfor %}
