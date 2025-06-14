@@ -721,23 +721,6 @@ def ajouter_film_manuellement():
 
     return render_template("ajouter_film.html", results=results, message=message)
 
-@app.route('/')
-def page_accueil():
-    conn = sqlite3.connect('cinebuzz.db')
-    c = conn.cursor()
-
-    c.execute("SELECT * FROM films WHERE date = ?", (date.today().isoformat(),))
-    films_du_jour = [dict(zip([col[0] for col in c.description], row)) for row in c.fetchall()]
-
-    c.execute("SELECT * FROM films WHERE date >= ?", (date.today().isoformat(),))
-    films_semaine = [dict(zip([col[0] for col in c.description], row)) for row in c.fetchall()]
-
-    c.execute("SELECT * FROM produits")
-    produits = [dict(zip([col[0] for col in c.description], row)) for row in c.fetchall()]
-
-    conn.close()
-
-    return render_template("accueil.html", films_du_jour=films_du_jour, films_semaine=films_semaine, produits=produits)
 
 
 
