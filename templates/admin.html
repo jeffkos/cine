@@ -26,8 +26,8 @@
     <form method="POST">
         <label for="titre">Nom du film :</label>
         <input type="text" name="titre" id="titre" required>
-
-        <button type="button" onclick="chercherTmdbId()">🔍 Chercher ID TMDb</button>
+        <button type="button" onclick="remplirInfosFilm()">🔍 Préremplir depuis TMDb</button>
+        <div id="film-info" style="margin-top:10px;"></div>
 
         <label for="date">Date de projection :</label>
         <input type="date" name="date" required>
@@ -58,21 +58,27 @@
     </p>
 
     <script>
-        async function chercherTmdbId() {
+        async function remplirInfosFilm() {
             const titre = document.getElementById('titre').value;
             if (!titre) {
                 alert("Veuillez d'abord entrer un titre.");
                 return;
             }
 
-            const response = await fetch(`/tmdb_search?query=${encodeURIComponent(titre)}`);
+            const response = await fetch(`/tmdb_info?query=${encodeURIComponent(titre)}`);
             const data = await response.json();
+
+            const infoDiv = document.getElementById('film-info');
 
             if (data.tmdb_id) {
                 document.getElementById('tmdb_id').value = data.tmdb_id;
-                alert(`✅ TMDb ID trouvé : ${data.tmdb_id}`);
+                infoDiv.innerHTML = `
+                    <p><strong>${data.title}</strong> (${data.release_date}) - note: ${data.rating}/10</p>
+                    <p>${data.overview}</p>
+                    ${data.poster_url ? `<img src="${data.poster_url}" alt="affiche" style="width:150px;">` : ''}
+                `;
             } else {
-                alert("❌ Aucun résultat trouvé.");
+                infoDiv.innerHTML = '<p style="color:red;">Aucun résultat trouvé.</p>';
             }
         }
     </script>

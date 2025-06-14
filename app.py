@@ -168,6 +168,29 @@ def tmdb_search():
         return jsonify({"tmdb_id": None})
 
 
+@app.route('/tmdb_info')
+def tmdb_info():
+    query = request.args.get('query')
+    if not query:
+        return jsonify({"error": "missing query"}), 400
+
+    url = f"https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&query={query}&language=fr-FR"
+    response = requests.get(url).json()
+
+    if response.get('results'):
+        film = response['results'][0]
+        info = {
+            "tmdb_id": film['id'],
+            "title": film['title'],
+            "overview": film.get('overview'),
+            "poster_url": f"https://image.tmdb.org/t/p/w300{film['poster_path']}" if film.get('poster_path') else None,
+            "release_date": film.get('release_date', ''),
+            "rating": film.get('vote_average')
+        }
+        return jsonify(info)
+    return jsonify({"tmdb_id": None})
+
+
 @app.route('/film/<int:tmdb_id>', methods=['GET', 'POST'])
 def detail_film(tmdb_id):
     # 🔗 Récupérer les infos détaillées du film via TMDb
