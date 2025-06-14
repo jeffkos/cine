@@ -1,21 +1,24 @@
-from flask import Flask, render_template, request
+import os
+import io
+import csv
 import sqlite3
 import requests
-from datetime import date
-from flask import redirect, url_for
-from datetime import timedelta
-from flask import jsonify
-import csv
-from flask import make_response
-import io
-from flask import Flask, render_template, request, redirect, url_for, session
-import os
 import bcrypt
-import os
+from datetime import date, timedelta
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    jsonify,
+    make_response,
+)
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
+
 load_dotenv()
-import os
 API_KEY = os.getenv("TMDB_API_KEY")
 
 
@@ -44,8 +47,6 @@ def chercher_film(nom_film):
     else:
         return None
     
-
-from datetime import date
 
 def films_du_jour():
     conn = sqlite3.connect('cinebuzz.db')
@@ -109,8 +110,6 @@ def admin():
 
     return render_template('admin.html', message=message)
 
-from datetime import timedelta
-
 @app.route('/programme')
 def programme():
     today = date.today()
@@ -149,8 +148,6 @@ def programme():
     return render_template('programme.html', programme=jours_films)
 
 
-
-from flask import jsonify
 
 @app.route('/tmdb_search')
 def tmdb_search():
@@ -750,40 +747,3 @@ if __name__ == '__main__':
 
 
 
-import sqlite3
-from datetime import date
-
-def films_du_jour(jour=None):
-    if not jour:
-        jour = date.today().isoformat()
-
-    conn = sqlite3.connect('cinebuzz.db')
-    c = conn.cursor()
-    c.execute("SELECT * FROM films WHERE date = ?", (jour,))
-    films = c.fetchall()
-    conn.close()
-    return films
-
-import sqlite3
-from datetime import date
-
-def films_du_jour():
-    conn = sqlite3.connect('cinebuzz.db')
-    c = conn.cursor()
-    c.execute("SELECT titre, horaires, version, tmdb_id, salle FROM films WHERE date = ?", (date.today().isoformat(),))
-    resultats = c.fetchall()
-    conn.close()
-
-    # Enrichir avec TMDb
-    films = []
-    for titre, horaires, version, tmdb_id, salle in resultats:
-        url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={API_KEY}&language=fr-FR"
-        reponse = requests.get(url).json()
-        films.append({
-            "titre": titre,
-            "horaires": horaires,
-            "version": version,
-            "salle": salle,
-            "affiche": f"https://image.tmdb.org/t/p/w780{reponse['backdrop_path']}" if reponse.get('backdrop_path') else None
-        })
-    return films
