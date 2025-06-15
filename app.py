@@ -16,22 +16,28 @@ from flask import (
     make_response,
 )
 from werkzeug.utils import secure_filename
-from dotenv import load_dotenv
 
-load_dotenv()
-API_KEY = os.getenv("TMDB_API_KEY")
+from config import (
+    TMDB_API_KEY,
+    SECRET_KEY,
+    UPLOAD_FOLDER,
+    ALLOWED_EXTENSIONS,
+    CINE_DB,
+    RESERVATIONS_DB,
+)
+from db_utils import get_connection
 
 
 
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
+app.secret_key = SECRET_KEY
 
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2 Mo
 
 
 def chercher_film(nom_film):
-    url = f"https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&query={nom_film}&language=fr-FR"
+    url = f"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API_KEY}&query={nom_film}&language=fr-FR"
     reponse = requests.get(url)
     donnees = reponse.json()
 
@@ -49,16 +55,18 @@ def chercher_film(nom_film):
     
 
 def films_du_jour():
-    conn = sqlite3.connect('cinebuzz.db')
-    c = conn.cursor()
-    c.execute("SELECT titre, horaires, version, tmdb_id, salle FROM films WHERE date = ?", (date.today().isoformat(),))
-    resultats = c.fetchall()
-    conn.close()
+    with get_connection(CINE_DB) as conn:
+        c = conn.cursor()
+        c.execute(
+            "SELECT titre, horaires, version, tmdb_id, salle FROM films WHERE date = ?",
+            (date.today().isoformat(),),
+        )
+        resultats = c.fetchall()
 
     # Enrichir avec l’API TMDb
     films = []
     for titre, horaires, version, tmdb_id, salle in resultats:
-        url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={API_KEY}&language=fr-FR"
+        url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_API_KEY}&language=fr-FR"
         reponse = requests.get(url).json()
         films.append({
             "titre": titre,
@@ -71,18 +79,10 @@ def films_du_jour():
 
 
 # 🔧 Config upload
-UPLOAD_FOLDER = 'static/uploads'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-@app.route('/')
-def accueil():
-    films = films_du_jour()
-    return render_template('index.html', films=films)
 
 
 @app.route('/admin', methods=['GET', 'POST'])
@@ -97,8 +97,8 @@ def admin():
         tmdb_id = request.form['tmdb_id']
 
         # Sauvegarde dans la base
-        conn = sqlite3.connect('cinebuzz.db')
-        c = conn.cursor()
+        with get_connection(CINE_DB) as conn:
+            c = conn.cursor()
         c.execute('''
             INSERT INTO films (titre, date, horaires, version, salle, tmdb_id)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -115,11 +115,12 @@ def programme():
     today = date.today()
     semaine = [today + timedelta(days=i) for i in range(7)]
 
-    conn = sqlite3.connect('cinebuzz.db')
-    c = conn.cursor()
-    c.execute("SELECT titre, date, horaires, version, tmdb_id, salle FROM films ORDER BY date ASC")
-    resultats = c.fetchall()
-    conn.close()
+    with get_connection(CINE_DB) as conn:
+        c = conn.cursor()
+        c.execute(
+            "SELECT titre, date, horaires, version, tmdb_id, salle FROM films ORDER BY date ASC"
+        )
+        resultats = c.fetchall()
 
     # Organisation des films par jour
     jours_films = {}
@@ -129,7 +130,7 @@ def programme():
         liste_films = []
 
         for titre, date_proj, horaires, version, tmdb_id, salle in films_du_jour:
-            url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={API_KEY}&language=fr-FR"
+            url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_API_KEY}&language=fr-FR"
             reponse = requests.get(url).json()
             affiche = f"https://image.tmdb.org/t/p/w300{reponse['poster_path']}" if reponse.get('poster_path') else None
 
@@ -155,7 +156,7 @@ def tmdb_search():
     if not query:
         return jsonify({"error": "missing query"}), 400
 
-    url = f"https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&query={query}&language=fr-FR"
+    url = f"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API_KEY}&query={query}&language=fr-FR"
     response = requests.get(url).json()
 
     if response['results']:
@@ -171,7 +172,7 @@ def tmdb_info():
     if not query:
         return jsonify({"error": "missing query"}), 400
 
-    url = f"https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&query={query}&language=fr-FR"
+    url = f"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API_KEY}&query={query}&language=fr-FR"
     response = requests.get(url).json()
 
     if response.get('results'):
@@ -191,7 +192,7 @@ def tmdb_info():
 @app.route('/film/<int:tmdb_id>', methods=['GET', 'POST'])
 def detail_film(tmdb_id):
     # 🔗 Récupérer les infos détaillées du film via TMDb
-    url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={API_KEY}&language=fr-FR&append_to_response=videos,credits"
+    url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_API_KEY}&language=fr-FR&append_to_response=videos,credits"
     reponse = requests.get(url).json()
 
     # 🧾 Infos film
@@ -214,14 +215,17 @@ def detail_film(tmdb_id):
             break
 
     # 📅 Récupérer les projections programmées
-    conn = sqlite3.connect('cinebuzz.db')
-    c = conn.cursor()
-    c.execute("SELECT date, horaires, salle FROM films WHERE tmdb_id = ? ORDER BY date ASC", (tmdb_id,))
-    projections = c.fetchall()
+    with get_connection(CINE_DB) as conn:
+        c = conn.cursor()
+        c.execute(
+            "SELECT date, horaires, salle FROM films WHERE tmdb_id = ? ORDER BY date ASC",
+            (tmdb_id,),
+        )
+        projections = c.fetchall()
 
-    # 💬 Récupérer les commentaires
-    c.execute("SELECT auteur, commentaire FROM commentaires WHERE film_id = ?", (tmdb_id,))
-    commentaires = c.fetchall()
+        # 💬 Récupérer les commentaires
+        c.execute("SELECT auteur, commentaire FROM commentaires WHERE film_id = ?", (tmdb_id,))
+        commentaires = c.fetchall()
 
     # 💬 Traitement d'un commentaire utilisateur connecté
     message = ""
@@ -230,15 +234,17 @@ def detail_film(tmdb_id):
             auteur = session.get('username', 'Utilisateur')
             commentaire = request.form['commentaire']
 
-            c.execute("INSERT INTO commentaires (film_id, auteur, commentaire) VALUES (?, ?, ?)",
-                    (tmdb_id, auteur, commentaire))
-            conn.commit()
+            with get_connection(CINE_DB) as conn:
+                c = conn.cursor()
+                c.execute(
+                    "INSERT INTO commentaires (film_id, auteur, commentaire) VALUES (?, ?, ?)",
+                    (tmdb_id, auteur, commentaire),
+                )
+                conn.commit()
             message = "✅ Votre commentaire a été publié."
             commentaires.append((auteur, commentaire))
-    else:
-        message = "❌ Vous devez être connecté pour publier un commentaire."
-
-    conn.close()
+        else:
+            message = "❌ Vous devez être connecté pour publier un commentaire."
 
     return render_template("detail.html",
                            film=film,
@@ -254,16 +260,15 @@ def detail_film(tmdb_id):
 @app.route('/reserver/<int:tmdb_id>', methods=['GET', 'POST'])
 def reserver(tmdb_id):
     # Récupérer les infos TMDb du film
-    url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={API_KEY}&language=fr-FR"
+    url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_API_KEY}&language=fr-FR"
     reponse = requests.get(url).json()
     titre_film = reponse.get("title")
 
     # Récupérer les projections du film dans cinebuzz.db
-    conn = sqlite3.connect('cinebuzz.db')
-    c = conn.cursor()
-    c.execute("SELECT date, horaires, salle FROM films WHERE tmdb_id = ?", (tmdb_id,))
-    projections = c.fetchall()
-    conn.close()
+    with get_connection(CINE_DB) as conn:
+        c = conn.cursor()
+        c.execute("SELECT date, horaires, salle FROM films WHERE tmdb_id = ?", (tmdb_id,))
+        projections = c.fetchall()
 
     message = ""
 
@@ -281,19 +286,28 @@ def reserver(tmdb_id):
         user_id = session.get('user_id') if session.get('user') else None
 
         # Enregistrer la réservation dans reservations.db
-        conn = sqlite3.connect('reservations.db')
-        c = conn.cursor()
-        c.execute('''
+        with get_connection(RESERVATIONS_DB) as conn:
+            c = conn.cursor()
+            c.execute(
+                '''
             INSERT INTO reservations (
                 nom, email, telephone, film, date_projection, salle, horaire,
                 alerte_minutes, canal, user_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            nom, email, telephone, titre_film, date_projection,
-            salle_res, horaire, alerte_minutes, canal, user_id
-        ))
-        conn.commit()
-        conn.close()
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                (
+                    nom,
+                    email,
+                    telephone,
+                    titre_film,
+                    date_projection,
+                    salle_res,
+                    horaire,
+                    alerte_minutes,
+                    canal,
+                    user_id,
+                ),
+            )
+            conn.commit()
 
         message = "✅ Réservation enregistrée avec succès."
 
@@ -315,33 +329,32 @@ def admin_reservations():
     film_filter = request.args.get('film')
     date_filter = request.args.get('date')
 
-    conn = sqlite3.connect('reservations.db')
-    c = conn.cursor()
+    with get_connection(RESERVATIONS_DB) as conn:
+        c = conn.cursor()
 
-    # Requête dynamique avec filtres
-    base_query = "SELECT nom, email, telephone, film, date_projection, salle, horaire FROM reservations"
-    filters = []
-    params = []
+        # Requête dynamique avec filtres
+        base_query = "SELECT nom, email, telephone, film, date_projection, salle, horaire FROM reservations"
+        filters = []
+        params = []
 
-    if film_filter:
-        filters.append("film LIKE ?")
-        params.append(f"%{film_filter}%")
-    if date_filter:
-        filters.append("date_projection = ?")
-        params.append(date_filter)
+        if film_filter:
+            filters.append("film LIKE ?")
+            params.append(f"%{film_filter}%")
+        if date_filter:
+            filters.append("date_projection = ?")
+            params.append(date_filter)
 
-    if filters:
-        base_query += " WHERE " + " AND ".join(filters)
+        if filters:
+            base_query += " WHERE " + " AND ".join(filters)
 
-    base_query += " ORDER BY date_projection ASC"
-    c.execute(base_query, params)
-    data = c.fetchall()
+        base_query += " ORDER BY date_projection ASC"
+        c.execute(base_query, params)
+        data = c.fetchall()
 
-    # Statistiques par film
-    c.execute("SELECT film, COUNT(*) FROM reservations GROUP BY film ORDER BY COUNT(*) DESC")
-    stats = c.fetchall()
+        # Statistiques par film
+        c.execute("SELECT film, COUNT(*) FROM reservations GROUP BY film ORDER BY COUNT(*) DESC")
+        stats = c.fetchall()
 
-    conn.close()
     return render_template('admin_reservations.html', reservations=data, stats=stats, film_filter=film_filter, date_filter=date_filter)
 
 
@@ -352,11 +365,12 @@ def export_csv():
     if not session.get('admin'):
         return redirect(url_for('login'))
 
-    conn = sqlite3.connect('reservations.db')
-    c = conn.cursor()
-    c.execute("SELECT nom, email, telephone, film, date_projection, salle, horaire FROM reservations ORDER BY date_projection ASC")
-    data = c.fetchall()
-    conn.close()
+    with get_connection(RESERVATIONS_DB) as conn:
+        c = conn.cursor()
+        c.execute(
+            "SELECT nom, email, telephone, film, date_projection, salle, horaire FROM reservations ORDER BY date_projection ASC"
+        )
+        data = c.fetchall()
 
     # 🧠 Fichier CSV en mémoire
     output = io.StringIO()
@@ -383,48 +397,55 @@ def login():
         identifiant = request.form['identifiant']  # Peut être email ou username
         password = request.form['password']
 
-        conn = sqlite3.connect('cinebuzz.db')
-        c = conn.cursor()
+        with get_connection(CINE_DB) as conn:
+            c = conn.cursor()
 
-        # 🔍 Cherche l'admin par email ou nom d'utilisateur
-        c.execute("""
-            SELECT id, username, email, password_hash, role 
-            FROM admins 
+            # 🔍 Cherche l'admin par email ou nom d'utilisateur
+            c.execute(
+                """
+            SELECT id, username, email, password_hash, role
+            FROM admins
             WHERE email = ? OR username = ?
-        """, (identifiant, identifiant))
-        admin = c.fetchone()
+            """,
+                (identifiant, identifiant),
+            )
+            admin = c.fetchone()
 
-        if admin:
-            password_hash = admin[3]
-            if isinstance(password_hash, str):
-                password_hash = password_hash.encode('utf-8')
-            if bcrypt.checkpw(password.encode('utf-8'), password_hash):
-                session['admin'] = True
-                session['admin_id'] = admin[0]
-                session['username'] = admin[1]
-                session['role'] = admin[4]
+            if admin:
+                password_hash = admin[3]
+                if isinstance(password_hash, str):
+                    password_hash = password_hash.encode("utf-8")
+                if bcrypt.checkpw(password.encode("utf-8"), password_hash):
+                    session["admin"] = True
+                    session["admin_id"] = admin[0]
+                    session["username"] = admin[1]
+                    session["role"] = admin[4]
+                    return redirect(
+                        url_for("admin_dashboard")
+                        if admin[4] == "superadmin"
+                        else url_for("admin_reservations")
+                    )
 
-                conn.close()
-                return redirect(url_for('admin_dashboard') if admin[4] == 'superadmin' else url_for('admin_reservations'))
-
-        # 🔍 Sinon cherche l'utilisateur simple
-        c.execute("""
-            SELECT id, username, email, password_hash 
-            FROM users 
+            # 🔍 Sinon cherche l'utilisateur simple
+            c.execute(
+                """
+            SELECT id, username, email, password_hash
+            FROM users
             WHERE email = ? OR username = ?
-        """, (identifiant, identifiant))
-        user = c.fetchone()
-        conn.close()
+            """,
+                (identifiant, identifiant),
+            )
+            user = c.fetchone()
 
         if user:
             password_hash = user[3]
             if isinstance(password_hash, str):
-                password_hash = password_hash.encode('utf-8')
-            if bcrypt.checkpw(password.encode('utf-8'), password_hash):
-                session['user'] = True
-                session['user_id'] = user[0]
-                session['username'] = user[1]
-                return redirect(url_for('accueil'))
+                password_hash = password_hash.encode("utf-8")
+            if bcrypt.checkpw(password.encode("utf-8"), password_hash):
+                session["user"] = True
+                session["user_id"] = user[0]
+                session["username"] = user[1]
+                return redirect(url_for("accueil"))
 
         erreur = "❌ Identifiants incorrects."
 
@@ -533,8 +554,8 @@ def gestion_admins():
     if not session.get('admin') or session.get('role') != 'superadmin':
         return redirect(url_for('login'))
 
-    conn = sqlite3.connect('cinebuzz.db')
-    c = conn.cursor()
+    with get_connection(CINE_DB) as conn:
+        c = conn.cursor()
 
     if request.method == 'POST':
         username = request.form['username']
@@ -580,11 +601,10 @@ def login_user():
         email = request.form['email']
         password = request.form['password']
 
-        conn = sqlite3.connect('cinebuzz.db')
-        c = conn.cursor()
-        c.execute("SELECT id, username, password_hash FROM users WHERE email = ?", (email,))
-        user = c.fetchone()
-        conn.close()
+        with get_connection(CINE_DB) as conn:
+            c = conn.cursor()
+            c.execute("SELECT id, username, password_hash FROM users WHERE email = ?", (email,))
+            user = c.fetchone()
 
         if user and bcrypt.checkpw(password.encode('utf-8'), user[2]):
             session['user_id'] = user[0]
@@ -603,27 +623,30 @@ def mon_compte():
 
     user_id = session.get('user_id')
 
-    conn = sqlite3.connect('reservations.db')
-    c = conn.cursor()
-    c.execute('''
+    with get_connection(RESERVATIONS_DB) as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
         SELECT film, date_projection, horaire, canal, alerte_minutes
         FROM reservations
         WHERE user_id = ?
         ORDER BY date_projection DESC
-    ''', (user_id,))
-    reservations = c.fetchall()
-    conn.close()
+        ''',
+            (user_id,),
+        )
+        reservations = c.fetchall()
 
     return render_template('mon_compte.html', reservations=reservations)
 
 
 @app.route('/produits')
 def produits():
-    conn = sqlite3.connect('cinebuzz.db')
-    c = conn.cursor()
-    c.execute("SELECT nom, categorie, description, prix, image_url FROM produits ORDER BY categorie ASC, nom ASC")
-    produits = c.fetchall()
-    conn.close()
+    with get_connection(CINE_DB) as conn:
+        c = conn.cursor()
+        c.execute(
+            "SELECT nom, categorie, description, prix, image_url FROM produits ORDER BY categorie ASC, nom ASC"
+        )
+        produits = c.fetchall()
     return render_template("produits.html", produits=produits)
     
 
@@ -632,45 +655,52 @@ def admin_produits():
     if not session.get('admin'):
         return redirect(url_for('login'))
 
-    conn = sqlite3.connect('cinebuzz.db')
-    c = conn.cursor()
+    with get_connection(CINE_DB) as conn:
+        c = conn.cursor()
 
-    # 🟩 Traitement ajout ou modification
-    if request.method == 'POST':
-        nom = request.form['nom']
-        categorie = request.form['categorie']
-        description = request.form['description']
-        prix = float(request.form['prix'])
+        # 🟩 Traitement ajout ou modification
+        if request.method == 'POST':
+            nom = request.form['nom']
+            categorie = request.form['categorie']
+            description = request.form['description']
+            prix = float(request.form['prix'])
 
-        image_url = request.form.get('image_url') or ""
-        file = request.files.get('image_file')
+            image_url = request.form.get('image_url') or ""
+            file = request.files.get('image_file')
 
-        # 📸 Upload fichier si présent
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            image_url = f"/static/uploads/{filename}"
+            # 📸 Upload fichier si présent
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                image_url = f"/static/uploads/{filename}"
 
-        if request.form.get('edit_id'):
-            # ✏️ Modification produit
-            edit_id = int(request.form['edit_id'])
-            c.execute('''
+            if request.form.get('edit_id'):
+                # ✏️ Modification produit
+                edit_id = int(request.form['edit_id'])
+                c.execute(
+                    '''
                 UPDATE produits
                 SET nom = ?, categorie = ?, description = ?, prix = ?, image_url = ?
                 WHERE id = ?
-            ''', (nom, categorie, description, prix, image_url, edit_id))
-        else:
-            # ➕ Ajout nouveau produit
-            c.execute('''
+                ''',
+                    (nom, categorie, description, prix, image_url, edit_id),
+                )
+            else:
+                # ➕ Ajout nouveau produit
+                c.execute(
+                    '''
                 INSERT INTO produits (nom, categorie, description, prix, image_url)
                 VALUES (?, ?, ?, ?, ?)
-            ''', (nom, categorie, description, prix, image_url))
-        conn.commit()
+                ''',
+                    (nom, categorie, description, prix, image_url),
+                )
+            conn.commit()
 
-    # 📊 Récupérer tous les produits
-    c.execute("SELECT id, nom, categorie, description, prix, image_url FROM produits ORDER BY categorie, nom")
-    produits = c.fetchall()
-    conn.close()
+        # 📊 Récupérer tous les produits
+        c.execute(
+            "SELECT id, nom, categorie, description, prix, image_url FROM produits ORDER BY categorie, nom"
+        )
+        produits = c.fetchall()
 
     return render_template("admin_produits.html", produits=produits)
 
@@ -680,11 +710,10 @@ def supprimer_produit(id):
     if not session.get('admin'):
         return redirect(url_for('login'))
 
-    conn = sqlite3.connect('cinebuzz.db')
-    c = conn.cursor()
-    c.execute("DELETE FROM produits WHERE id = ?", (id,))
-    conn.commit()
-    conn.close()
+    with get_connection(CINE_DB) as conn:
+        c = conn.cursor()
+        c.execute("DELETE FROM produits WHERE id = ?", (id,))
+        conn.commit()
     return redirect(url_for('admin_produits'))
 
 
@@ -703,39 +732,37 @@ def ajouter_film_manuellement():
         version = request.form['version']
         salle = request.form['salle']
 
-        conn = sqlite3.connect('cinebuzz.db')
-        c = conn.cursor()
-        titre = request.form['titre']
-        c.execute("INSERT INTO films (tmdb_id, titre, date, horaires, version, salle) VALUES (?, ?, ?, ?, ?, ?)",
-            (tmdb_id, titre, date, horaire, version, salle))
-
-        conn.commit()
-        conn.close()
+        with get_connection(CINE_DB) as conn:
+            c = conn.cursor()
+            titre = request.form['titre']
+            c.execute(
+                "INSERT INTO films (tmdb_id, titre, date, horaires, version, salle) VALUES (?, ?, ?, ?, ?, ?)",
+                (tmdb_id, titre, date, horaire, version, salle),
+            )
+            conn.commit()
         message = "✅ Film ajouté au programme."
 
     elif request.args.get("query"):
         query = request.args.get("query")
-        url = f"https://api.themoviedb.org/3/search/movie?api_key={API_KEY}&language=fr-FR&query={query}"
+        url = f"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API_KEY}&language=fr-FR&query={query}"
         response = requests.get(url).json()
         results = response.get("results", [])
 
     return render_template("ajouter_film.html", results=results, message=message)
 
 @app.route('/')
-def page_accueil():
-    conn = sqlite3.connect('cinebuzz.db')
-    c = conn.cursor()
+def accueil():
+    with get_connection(CINE_DB) as conn:
+        c = conn.cursor()
 
-    c.execute("SELECT * FROM films WHERE date = ?", (date.today().isoformat(),))
-    films_du_jour = [dict(zip([col[0] for col in c.description], row)) for row in c.fetchall()]
+        c.execute("SELECT * FROM films WHERE date = ?", (date.today().isoformat(),))
+        films_du_jour = [dict(zip([col[0] for col in c.description], row)) for row in c.fetchall()]
 
-    c.execute("SELECT * FROM films WHERE date >= ?", (date.today().isoformat(),))
-    films_semaine = [dict(zip([col[0] for col in c.description], row)) for row in c.fetchall()]
+        c.execute("SELECT * FROM films WHERE date >= ?", (date.today().isoformat(),))
+        films_semaine = [dict(zip([col[0] for col in c.description], row)) for row in c.fetchall()]
 
-    c.execute("SELECT * FROM produits")
-    produits = [dict(zip([col[0] for col in c.description], row)) for row in c.fetchall()]
-
-    conn.close()
+        c.execute("SELECT * FROM produits")
+        produits = [dict(zip([col[0] for col in c.description], row)) for row in c.fetchall()]
 
     return render_template("accueil.html", films_du_jour=films_du_jour, films_semaine=films_semaine, produits=produits)
 
