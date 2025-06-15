@@ -40,7 +40,7 @@
 <div class="produits-grid">
     {% for produit in produits %}
         <div class="produit-card">
-            <img src="{{ url_for('static', filename='uploads/' + produit.image) }}" alt="{{ produit.nom }}">
+            <img src="{{ produit.image_url }}" alt="{{ produit.nom }}">
             <h4>{{ produit.nom }}</h4>
             <p>{{ produit.prix }} FCFA</p>
         </div>
