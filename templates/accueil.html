@@ -3,6 +3,14 @@
 
 {% block content %}
 
+<div class="hero">
+    <div class="hero-text">
+        <h1>Bienvenue chez CinéBuzz</h1>
+        <p>Réservez vos séances en ligne</p>
+        <a href="{{ url_for('programme') }}" class="btn">Voir le programme</a>
+    </div>
+</div>
+
 <!-- Slider des films du jour -->
 <div class="slider">
     {% if films_du_jour %}

@@ -27,3 +27,14 @@
 
 ## 📁 Structure du projet
 
+
+### Ajouter des films automatiquement
+
+Un script utilitaire `import_tmdb_films.py` permet de peupler la base avec les films tendance du moment sur TMDb :
+
+```bash
+python import_tmdb_films.py
+```
+
+Il ajoute quelques films avec des horaires par défaut (10h, 15h et 20h).
+
