@@ -23,6 +23,44 @@ header {
     align-items: center;
 }
 
+/* Section d'accueil avec image de couverture */
+.hero {
+    position: relative;
+    height: 280px;
+    background: url('/static/img/menu.jpg') center/cover no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+.hero-text {
+    background: rgba(0, 0, 0, 0.6);
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+/* Boutons communs */
+.btn,
+.btn-small {
+    display: inline-block;
+    background: #ffc107;
+    color: #000;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+.btn:hover,
+.btn-small:hover {
+    background: #ff5722;
+    color: #fff;
+}
+.btn-small {
+    padding: 6px 12px;
+    font-size: 0.9em;
+}
+
 header h1 {
     margin: 0;
     font-size: 1.8em;
